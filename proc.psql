@@ -1,0 +1,54 @@
+CREATE OR REPLACE FUNCTION deleteUserByUsername(username varchar(1024), superuser varchar(1024))
+RETURNS void AS $$
+DECLARE
+xuser_id bigint;
+x_portal_user_id bigint;
+superuser_id bigint;
+BEGIN
+	select id into xuser_id from x_user where user_name=username;
+	if xuser_id is not null then
+		delete from x_audit_map where user_id = xuser_id;
+		delete from x_group_users where user_id = xuser_id;
+		delete from x_perm_map where user_id = xuser_id;
+		delete from x_user where id = xuser_id;
+	end if;
+	select id into x_portal_user_id from x_portal_user where login_id=username;
+	if x_portal_user_id is not null then
+		select id into superuser_id from x_portal_user where login_id = superuser;
+		if superuser_id is null then
+			select user_id into superuser_id from x_portal_user_role where user_role = "ROLE_SYS_ADMIN" and status = 1 LIMIT 1;
+		end if;
+		update x_asset set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_asset set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_audit_map set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_audit_map set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_auth_sess set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_auth_sess set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_cred_store set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_cred_store set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_group set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_group set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_group_groups set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_group_groups set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_group_users set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_group_users set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_perm_map set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_perm_map set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_policy_export_audit set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_policy_export_audit set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_portal_user set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_portal_user set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_portal_user_role set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_portal_user_role set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_resource set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_resource set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_trx_log set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_trx_log set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		update x_user set added_by_id=superuser_id where added_by_id=x_portal_user_id;
+		update x_user set upd_by_id=superuser_id where upd_by_id=x_portal_user_id;
+		delete from x_auth_sess where user_id = x_portal_user_id;
+		delete from x_portal_user_role where user_id = x_portal_user_id;
+		delete from x_portal_user where id = x_portal_user_id;
+	end if;
+END;
+$$ LANGUAGE plpgsql;

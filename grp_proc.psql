@@ -1,0 +1,16 @@
+CREATE OR REPLACE FUNCTION deleteGroupByGroupName(grpName varchar(1024))
+RETURNS void AS $$
+DECLARE
+grpId bigint;
+
+BEGIN
+select id into grpId from x_group where group_name=grpName;
+if grpId is not null then
+	delete from x_audit_map where group_id = grpId;
+	delete from x_group_users where p_group_id = grpId;
+	delete from x_perm_map where group_id = grpId;
+	delete from x_group_groups where group_id = grpId or p_group_id = grpId;
+	delete from x_group where id = grpId;
+end if;
+END;
+$$ LANGUAGE plpgsql;
